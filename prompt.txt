@@ -1,0 +1,513 @@
+# Project Title
+
+AI Personal Finance Tracker & Analyst (Professional Sync-Based System)
+
+# Objective
+
+Build a professional AI-powered personal finance tracker that automatically syncs and analyzes financial data from multiple sources including:
+
+* SMS transactions
+* Notification access
+* Bank statement PDFs
+* CSV statements
+* Manual entries
+* User-uploaded statements (Web portal)
+* Optional email statement parsing
+
+This application should NOT include a payment gateway.
+
+Instead, the app should function as:
+
+A Passive Financial Intelligence Layer
+
+The system continuously syncs financial data and generates precise financial analytics and insights.
+
+---
+
+# Core Goals
+
+1. Passive Sync-Based Tracking (No Payment Gateway)
+2. Multiple Data Input Methods
+3. High Accuracy Financial Categorization
+4. Professional Financial Analytics
+5. Privacy-First Architecture
+6. Local + Optional Cloud Sync
+
+---
+
+# Target Platform
+
+Primary:
+
+* Android App (Flutter)
+
+Secondary:
+
+* Web Dashboard (React / NextJS)
+
+Backend:
+
+* FastAPI / Python
+
+Database:
+
+* SQLite (Local)
+* PostgreSQL (Cloud optional)
+
+AI Models:
+
+* Python ML Models
+* On-device classification (preferred)
+
+---
+
+# User Onboarding Flow
+
+When user installs and logs in:
+
+Step 1 — Authentication
+
+Secure Financial-Level Authentication:
+
+* Email + Password
+* Google Login (optional)
+* Biometric Login
+* App PIN Lock
+
+Security Requirements:
+
+* JWT tokens
+* Encrypted local storage
+* Secure key management
+
+---
+
+Step 2 — Data Sync Permission Setup
+
+User sees:
+
+"Connect Your Financial Data"
+
+Options:
+
+Enable:
+
+* SMS Access
+* Notification Access
+* Email Parsing (optional)
+* Upload Bank Statements
+* Manual Entry
+
+User chooses one or more.
+
+---
+
+# Data Collection Methods
+
+The system must support ALL possible financial data ingestion methods:
+
+---
+
+1. SMS Parsing (Primary)
+
+Extract transactions from:
+
+Banks:
+
+* HDFC
+* SBI
+* ICICI
+* Axis
+* Kotak
+* Others
+
+UPI Apps:
+
+* Google Pay
+* PhonePe
+* Paytm
+* Navi
+* BHIM
+
+Extract Fields:
+
+* Amount
+* Merchant
+* Bank
+* Date
+* Time
+* Transaction type
+* Balance (if available)
+
+---
+
+2. Notification Parsing
+
+Monitor notifications from:
+
+* Google Pay
+* PhonePe
+* Paytm
+* Bank apps
+
+Extract:
+
+* Amount
+* Merchant
+* Timestamp
+* App source
+
+---
+
+3. Bank Statement Upload
+
+User uploads:
+
+* PDF statements
+* CSV files
+* Excel statements
+
+System must:
+
+* Extract transaction table
+* Clean data
+* Normalize format
+
+Use:
+
+* PDF parser
+* OCR fallback (if scanned PDF)
+
+---
+
+4. Web Portal Upload
+
+User logs into web dashboard
+
+Uploads:
+
+* Bank statements
+* UPI export files
+* Expense sheets
+
+Backend processes:
+
+* Parse
+* Store
+* Sync to mobile
+
+---
+
+5. Email Statement Parsing (Optional Advanced)
+
+User connects email
+
+System detects:
+
+* Bank statement emails
+* Transaction emails
+
+Extract:
+
+* Transaction data
+
+---
+
+6. Manual Entry
+
+User manually adds:
+
+* Cash expenses
+* Offline purchases
+
+Example:
+
+₹500 petrol
+₹200 groceries
+₹100 parking
+
+---
+
+# Continuous Sync Engine
+
+Background Sync Service:
+
+* Detect new SMS
+* Detect new notifications
+* Check uploaded files
+
+New transaction:
+
+* Parse
+* Store
+* Categorize
+* Trigger AI analysis
+
+Use:
+
+* Android WorkManager
+* Background tasks
+
+---
+
+# Data Model
+
+Transaction Object:
+
+* id
+* amount
+* merchant
+* category
+* date
+* time
+* payment_method
+* bank
+* source
+* notes
+* confidence_score
+
+---
+
+# AI Categorization Engine
+
+Professional Categories:
+
+Essential Categories:
+
+* Rent
+* Utilities
+* Electricity
+* Water
+* Internet
+* Mobile
+
+Lifestyle:
+
+* Food
+* Fast food
+* Restaurants
+* Coffee
+
+Transport:
+
+* Petrol
+* Diesel
+* Cab
+* Public transport
+
+Shopping:
+
+* Groceries
+* Ration
+* Clothes
+* Accessories
+
+Financial:
+
+* Investment
+* EMI
+* Loan
+* Insurance
+
+Other:
+
+* Entertainment
+* Subscriptions
+* Education
+* Medical
+
+---
+
+# Precision Categorization
+
+Use:
+
+* Merchant dictionary
+* ML classifier
+* NLP model
+
+Example:
+
+Indian merchant detection:
+
+Swiggy → Fast food
+Reliance → Groceries
+Indian Oil → Petrol
+Amazon → Shopping
+
+---
+
+# AI Financial Analysis Engine
+
+Generate:
+
+Monthly Analytics
+
+Examples:
+
+Petrol spending:
+
+"You spend ₹4200 per month on petrol"
+
+Utilities:
+
+"Electricity + Internet = ₹3200/month"
+
+Food:
+
+"You spend ₹6500 on food"
+
+---
+
+# Average User Benchmark Analysis
+
+Compare with average user:
+
+Example:
+
+Average Petrol (Student): ₹2500
+Your Petrol: ₹4200
+
+Insight:
+
+"You spend 68% more on petrol than average"
+
+---
+
+# Budget Intelligence
+
+AI predicts:
+
+* Monthly spend
+* Saving potential
+* Expense trends
+
+Example:
+
+"You are likely to spend ₹32,000 this month"
+
+---
+
+# Expense Breakdown
+
+Charts:
+
+* Monthly breakdown
+* Weekly spending
+* Category graphs
+* Trends
+
+---
+
+# Advanced AI Insights
+
+Examples:
+
+"You spend more on fast food on weekends"
+
+"You spend ₹2000/month on coffee"
+
+"Subscriptions cost ₹1500/month"
+
+---
+
+# Dashboard UI
+
+Home Screen:
+
+Total spent this month
+
+Graphs:
+
+* Pie chart
+* Monthly trend
+* Category breakdown
+
+AI Insight Cards:
+
+* Overspending alerts
+* Saving suggestions
+
+---
+
+# Privacy & Security Requirements
+
+Critical:
+
+* Local-first storage
+* No financial data shared without consent
+* User can delete all data
+
+Security:
+
+* Encrypted database
+* Secure login
+* Secure sync
+
+---
+
+# App Architecture
+
+Frontend (Flutter)
+
+↓
+
+Data Collector Layer
+
+↓
+
+Parser Layer
+
+↓
+
+AI Analysis Engine
+
+↓
+
+Database
+
+↓
+
+Dashboard
+
+---
+
+# MVP Phase
+
+Phase 1:
+
+* Login
+* Permissions
+* SMS parsing
+* Statement upload
+* Manual entry
+* Dashboard
+
+Phase 2:
+
+* AI insights
+* Prediction
+* Web dashboard
+
+Phase 3:
+
+* Advanced analytics
+* Cloud sync
+
+---
+
+# Deliverables
+
+* Flutter mobile app
+* FastAPI backend
+* AI categorization engine
+* Sync system
+* Dashboard UI
+
+Build production-level architecture.
+
+Focus on privacy, accuracy, and performance.
+
+
+other than automatically fetching --U MUST ALSO ASK DATA FROM USER -ANY FORMAT , AND EXTRACT TRANSACTION DETAILS FROM IT
+THERE SHOULD BE A PROPER PROFESSIONAL LEVEL ANALYSIS ---- JUST AS GOOD AS A CHARTED ACCOUNTANT
