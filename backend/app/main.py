@@ -140,13 +140,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Include API Routers
 # ====================
 
-# Import routers here to avoid circular imports
-from app.api.v1 import analytics, auth, transactions, upload
+# ====================
+# Include API Routers
+# ====================
 
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(transactions.router, prefix="/api/v1")
-app.include_router(upload.router, prefix="/api/v1")
-app.include_router(analytics.router, prefix="/api/v1")
+# Import the aggregated v1 router with all prefixes
+from app.api.v1.router import api_router
+
+app.include_router(api_router, prefix="/api/v1")
 
 
 # ====================

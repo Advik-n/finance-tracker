@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, FileText, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
+import { transactionsApi, uploadApi } from "@/lib/api";
 
 export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -29,19 +30,8 @@ export default function UploadPage() {
       setUploadStatus((prev) => ({ ...prev, [file.name]: "uploading" }));
       
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/upload/statement`,
-          {
-            method: "POST",
-            body: formData,
-            credentials: "include",
-          }
-        );
-        
-        if (!response.ok) throw new Error("Upload failed");
+        const response = await uploadApi.upload(file);
+        if (response.status >= 400) throw new Error("Upload failed");
         
         setUploadStatus((prev) => ({ ...prev, [file.name]: "success" }));
       } catch (error) {
@@ -216,23 +206,16 @@ function ManualTransactionForm() {
     setLoading(true);
     
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/transactions`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            amount: parseFloat(form.amount),
-            description: form.description,
-            merchant_name: form.description,
-            transaction_type: form.type,
-            transaction_date: form.date,
-          }),
-        }
-      );
-      
-      if (response.ok) {
+      const transactionDate = new Date(form.date);
+      const response = await transactionsApi.create({
+        amount: parseFloat(form.amount),
+        description: form.description,
+        merchant_name: form.description,
+        transaction_type: form.type,
+        transaction_date: transactionDate.toISOString(),
+      });
+
+      if (response.status < 300) {
         setSuccess(true);
         setForm({
           amount: "",

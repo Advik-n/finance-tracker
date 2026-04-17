@@ -28,7 +28,6 @@ class BudgetCreateRequest(BaseModel):
     amount_limit: Decimal = Field(
         ...,
         gt=0,
-        decimal_places=2,
         description="Budget limit amount",
     )
     period: BudgetPeriod = Field(
@@ -59,7 +58,7 @@ class BudgetCreateRequest(BaseModel):
 class BudgetUpdateRequest(BaseModel):
     """Schema for updating a budget."""
 
-    amount_limit: Decimal | None = Field(default=None, gt=0, decimal_places=2)
+    amount_limit: Decimal | None = Field(default=None, gt=0)
     period: BudgetPeriod | None = None
     end_date: date | None = None
     alert_threshold: float | None = Field(default=None, ge=0.0, le=1.0)

@@ -35,7 +35,12 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(formData.email, formData.password, formData.fullName);
+      await register(
+        formData.email,
+        formData.password,
+        formData.confirmPassword,
+        formData.fullName
+      );
       router.push("/dashboard");
     } catch (err) {
       setError("Registration failed. Please try again.");

@@ -9,7 +9,7 @@ export default function HomePage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">AI Finance Tracker</span>
+            <span className="text-xl font-semibold">FinSight AI</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link
@@ -33,12 +33,12 @@ export default function HomePage() {
         <section className="container py-24 md:py-32">
           <div className="mx-auto flex max-w-[64rem] flex-col items-center gap-4 text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              Take Control of Your{" "}
-              <span className="text-primary">Finances</span> with AI
+              Your <span className="text-primary">Financial Intelligence</span>{" "}
+              Layer
             </h1>
             <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-              Upload bank statements, auto-categorize transactions, and get
-              AI-powered insights to optimize your spending and savings.
+              Upload statements, auto-categorize spend, and get CA-level
+              insights across petrol, food, utilities, clothes, and groceries.
             </p>
             <div className="flex gap-4">
               <Link
@@ -71,33 +71,33 @@ export default function HomePage() {
           <div className="mx-auto mt-16 grid max-w-5xl gap-8 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<Upload className="h-8 w-8" />}
-              title="Smart Upload"
-              description="Upload PDF, CSV, or Excel bank statements. Our AI automatically extracts and categorizes transactions."
+              title="Smart Statement Upload"
+              description="Import PDF, CSV, or Excel statements with automated extraction and classification."
             />
             <FeatureCard
               icon={<Sparkles className="h-8 w-8" />}
-              title="AI Categorization"
-              description="Transactions are automatically categorized using machine learning, saving you hours of manual work."
+              title="High-Accuracy Categorization"
+              description="RAG-enhanced models prevent petrol and food misclassification."
             />
             <FeatureCard
               icon={<BarChart3 className="h-8 w-8" />}
-              title="Visual Analytics"
-              description="Beautiful charts and insights show exactly where your money goes each month."
+              title="Professional Analytics"
+              description="Interactive charts, aggregates, and benchmarked insights."
             />
             <FeatureCard
               icon={<Shield className="h-8 w-8" />}
-              title="Bank-Level Security"
-              description="Your financial data is encrypted and protected with enterprise-grade security measures."
+              title="Privacy-First"
+              description="Read-only analysis with encrypted sensitive fields."
             />
             <FeatureCard
               icon={<Sparkles className="h-8 w-8" />}
-              title="Smart Insights"
-              description="Get personalized recommendations to reduce spending and increase savings."
+              title="Actionable Insights"
+              description="Identify overspending and get targeted saving suggestions."
             />
             <FeatureCard
               icon={<BarChart3 className="h-8 w-8" />}
-              title="Budget Tracking"
-              description="Set budgets by category and get alerts when you're close to your limits."
+              title="Spending Focus"
+              description="Instant totals for petrol, groceries, utilities, and clothing."
             />
           </div>
         </section>

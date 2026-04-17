@@ -7,7 +7,7 @@ for clean inclusion in the main application.
 
 from fastapi import APIRouter
 
-from app.api.v1 import analytics, auth, transactions, upload
+from app.api.v1 import analytics, auth, transactions, upload, users
 
 api_router = APIRouter()
 
@@ -37,4 +37,11 @@ api_router.include_router(
     analytics.router,
     prefix="/analytics",
     tags=["Analytics"]
+)
+
+# User profile endpoints
+api_router.include_router(
+    users.router,
+    prefix="/users",
+    tags=["Users"]
 )

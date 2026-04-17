@@ -1,41 +1,54 @@
 "use client";
 
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, DollarSign, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-
-// Mock data - replace with API call
-const stats = [
-  {
-    name: "Total Income",
-    value: 8450.0,
-    change: 12.5,
-    changeType: "positive" as const,
-    icon: TrendingUp,
-  },
-  {
-    name: "Total Expenses",
-    value: 5230.0,
-    change: 8.2,
-    changeType: "negative" as const,
-    icon: TrendingDown,
-  },
-  {
-    name: "Net Savings",
-    value: 3220.0,
-    change: 23.1,
-    changeType: "positive" as const,
-    icon: DollarSign,
-  },
-  {
-    name: "Transactions",
-    value: 147,
-    change: 5.4,
-    changeType: "neutral" as const,
-    icon: CreditCard,
-  },
-];
+import { analyticsApi } from "@/lib/api";
 
 export function DashboardStats() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["analytics-summary"],
+    queryFn: async () => (await analyticsApi.summary()).data,
+  });
+
+  const stats = useMemo(() => {
+    const incomeChange = data?.income_change ?? 0;
+    const expenseChange = data?.expense_change ?? 0;
+    const savingsChange = data?.savings_change ?? 0;
+
+    return [
+      {
+        name: "Total Income",
+        value: Number(data?.total_income ?? 0),
+        change: incomeChange,
+        changeType: incomeChange >= 0 ? "positive" : "negative",
+        icon: TrendingUp,
+      },
+      {
+        name: "Total Expenses",
+        value: Number(data?.total_expenses ?? 0),
+        change: expenseChange,
+        changeType: expenseChange >= 0 ? "negative" : "positive",
+        icon: TrendingDown,
+      },
+      {
+        name: "Net Savings",
+        value: Number(data?.net_savings ?? 0),
+        change: savingsChange,
+        changeType: savingsChange >= 0 ? "positive" : "negative",
+        icon: DollarSign,
+      },
+      {
+        name: "Transactions",
+        value: Number(data?.transaction_count ?? 0),
+        change: 0,
+        changeType: "neutral",
+        icon: CreditCard,
+      },
+    ] as const;
+  }, [data]);
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
@@ -62,19 +75,26 @@ export function DashboardStats() {
             </span>
           </div>
           <div className="mt-1 flex items-center gap-1">
-            <span
-              className={`text-sm ${
-                stat.changeType === "positive"
-                  ? "text-income"
-                  : stat.changeType === "negative"
-                  ? "text-expense"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {stat.changeType === "positive" ? "+" : ""}
-              {stat.change}%
-            </span>
-            <span className="text-sm text-muted-foreground">vs last month</span>
+            {stat.name !== "Transactions" && (
+              <>
+                <span
+                  className={`text-sm ${
+                    stat.changeType === "positive"
+                      ? "text-income"
+                      : stat.changeType === "negative"
+                      ? "text-expense"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {stat.change > 0 ? "+" : ""}
+                  {stat.change}%
+                </span>
+                <span className="text-sm text-muted-foreground">vs last month</span>
+              </>
+            )}
+            {isLoading && (
+              <span className="text-sm text-muted-foreground">Loading…</span>
+            )}
           </div>
         </div>
       ))}

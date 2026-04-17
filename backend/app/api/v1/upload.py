@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 @router.post("", response_model=dict)
+@router.post("/statement", response_model=dict, include_in_schema=False)
 async def upload_statement(
     file: UploadFile = File(..., description="Bank statement file (PDF, CSV, Excel)"),
     db: DbSession = None,

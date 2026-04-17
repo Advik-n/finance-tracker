@@ -754,3 +754,7 @@ class PDFStatementParser(BaseParser):
                     break
         
         return transactions
+
+
+# Alias for backwards compatibility
+PDFParser = PDFStatementParser

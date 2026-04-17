@@ -20,9 +20,8 @@ from .audit_logger import (
 )
 from .cors import (
     CORSMiddleware,
-    CORSConfig,
-    CORSPresets,
-    CORSValidator,
+    get_cors_config,
+    get_cors_origins,
 )
 from .security_headers import (
     SecurityHeadersMiddleware,
@@ -53,9 +52,8 @@ __all__ = [
     
     # CORS
     "CORSMiddleware",
-    "CORSConfig",
-    "CORSPresets",
-    "CORSValidator",
+    "get_cors_config",
+    "get_cors_origins",
     
     # Security Headers
     "SecurityHeadersMiddleware",

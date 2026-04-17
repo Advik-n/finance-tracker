@@ -645,3 +645,7 @@ class CSVStatementParser(BaseParser):
             result.add_error(f"CSV parsing failed: {str(e)}")
             result.parsing_time_ms = (time.time() - start_time) * 1000
             return result
+
+
+# Alias for backwards compatibility
+CSVParser = CSVStatementParser

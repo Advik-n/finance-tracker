@@ -24,7 +24,6 @@ class TransactionCreateRequest(BaseModel):
     amount: Decimal = Field(
         ...,
         gt=0,
-        decimal_places=2,
         description="Transaction amount (positive value)",
     )
     transaction_type: TransactionType = Field(..., description="CREDIT or DEBIT")
@@ -46,12 +45,20 @@ class TransactionCreateRequest(BaseModel):
         if v is not None and (not v.isdigit() or len(v) != 4):
             raise ValueError("Account last 4 must be exactly 4 digits")
         return v
+    
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: Decimal) -> Decimal:
+        """Validate amount has at most 2 decimal places."""
+        if v.as_tuple().exponent < -2:
+            raise ValueError("Amount can have at most 2 decimal places")
+        return round(v, 2)
 
 
 class TransactionUpdateRequest(BaseModel):
     """Schema for updating a transaction."""
 
-    amount: Decimal | None = Field(default=None, gt=0, decimal_places=2)
+    amount: Decimal | None = Field(default=None, gt=0)
     transaction_type: TransactionType | None = None
     category_id: UUID | None = None
     merchant_name: str | None = None
@@ -192,3 +199,9 @@ class TransactionSummary(BaseModel):
     avg_transaction_amount: Decimal
     largest_expense: Decimal | None = None
     largest_income: Decimal | None = None
+
+
+# Aliases for backwards compatibility
+TransactionCreate = TransactionCreateRequest
+TransactionUpdate = TransactionUpdateRequest
+TransactionFilter = TransactionFilterParams

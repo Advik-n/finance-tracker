@@ -1,5 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { subMonths, format } from "date-fns";
 import {
   LineChart,
   Line,
@@ -9,21 +12,34 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-// Mock data - replace with API call
-const data = [
-  { month: "Jan", income: 5200, expenses: 3800 },
-  { month: "Feb", income: 5400, expenses: 4200 },
-  { month: "Mar", income: 5100, expenses: 3600 },
-  { month: "Apr", income: 5800, expenses: 4100 },
-  { month: "May", income: 5600, expenses: 3900 },
-  { month: "Jun", income: 5900, expenses: 4300 },
-];
+import { analyticsApi } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 
 export function SpendingChart() {
+  const endDate = new Date();
+  const startDate = subMonths(endDate, 5);
+  const startDateStr = startDate.toISOString().split("T")[0];
+  const endDateStr = endDate.toISOString().split("T")[0];
+
+  const { data } = useQuery({
+    queryKey: ["spending-trends", startDateStr, endDateStr],
+    queryFn: async () =>
+      (await analyticsApi.trends(startDateStr, endDateStr, "monthly")).data,
+  });
+
+  const chartData = useMemo(() => {
+    return (
+      data?.data_points?.map((point: any) => ({
+        month: format(new Date(point.date), "MMM"),
+        income: Number(point.income),
+        expenses: Number(point.expenses),
+      })) || []
+    );
+  }, [data]);
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
+      <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis
           dataKey="month"
@@ -33,7 +49,7 @@ export function SpendingChart() {
         <YAxis
           stroke="hsl(var(--muted-foreground))"
           fontSize={12}
-          tickFormatter={(value) => `$${value}`}
+          tickFormatter={(value) => formatCurrency(value as number)}
         />
         <Tooltip
           contentStyle={{
@@ -41,7 +57,7 @@ export function SpendingChart() {
             border: "1px solid hsl(var(--border))",
             borderRadius: "8px",
           }}
-          formatter={(value: number) => [`$${value}`, ""]}
+          formatter={(value: number) => [formatCurrency(value), ""]}
         />
         <Line
           type="monotone"

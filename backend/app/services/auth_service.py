@@ -10,6 +10,7 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.orm import load_only
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -58,7 +59,27 @@ class AuthService:
             User if found, None otherwise
         """
         result = await self.db.execute(
-            select(User).where(User.email == email.lower())
+            select(User)
+            .where(User.email == email.lower())
+            .options(
+                load_only(
+                    User.id,
+                    User.email,
+                    User.password_hash,
+                    User.full_name,
+                    User.phone,
+                    User.avatar_url,
+                    User.is_active,
+                    User.is_verified,
+                    User.is_superuser,
+                    User.failed_login_attempts,
+                    User.locked_until,
+                    User.password_changed_at,
+                    User.created_at,
+                    User.updated_at,
+                    User.last_login,
+                )
+            )
         )
         return result.scalar_one_or_none()
 
@@ -174,6 +195,7 @@ class AuthService:
         user.reset_failed_attempts()
         user.last_login = datetime.now(timezone.utc)
         await self.db.flush()
+        await self.db.refresh(user)  # Reload user attributes after flush
 
         # Generate tokens
         tokens = self._generate_tokens(user, extended=data.remember_me)

@@ -1,10 +1,12 @@
 "use client";
 
 import { Bell, Search, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
+  const { user } = useAuth();
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
       {/* Search */}
       <div className="relative w-96">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -25,7 +27,9 @@ export function Header() {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <User className="h-4 w-4" />
           </div>
-          <span className="text-sm font-medium">John Doe</span>
+          <span className="text-sm font-medium">
+            {user?.full_name || "Account"}
+          </span>
         </button>
       </div>
     </header>

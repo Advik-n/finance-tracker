@@ -66,7 +66,15 @@ class Settings(BaseSettings):
 
     # File Upload
     max_upload_size_mb: int = Field(default=10, ge=1, le=100)
-    allowed_upload_extensions: list[str] = [".pdf", ".csv", ".xlsx", ".xls", ".png", ".jpg", ".jpeg"]
+    allowed_upload_extensions: list[str] = [
+        ".pdf",
+        ".csv",
+        ".xlsx",
+        ".xls",
+        ".png",
+        ".jpg",
+        ".jpeg",
+    ]
     upload_dir: str = "uploads"
 
     # Encryption

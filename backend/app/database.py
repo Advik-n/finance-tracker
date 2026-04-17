@@ -106,6 +106,15 @@ async def init_db() -> None:
         from app.models import budget, category, transaction, user  # noqa: F401
 
         await conn.run_sync(Base.metadata.create_all)
+    try:
+        from app.services.category_seed import seed_system_categories
+
+        async with AsyncSessionLocal() as session:
+            await seed_system_categories(session)
+            await session.commit()
+    except Exception as exc:
+        logger.error(f"Category seeding failed: {exc}")
+        raise
     logger.info("Database initialized successfully")
 
 

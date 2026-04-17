@@ -71,11 +71,14 @@ api.interceptors.response.use(
 // API endpoints
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post("/auth/login", new URLSearchParams({ username: email, password }), {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    api.post("/auth/login", { email, password, remember_me: false }),
+  register: (email: string, password: string, confirmPassword: string, fullName: string) =>
+    api.post("/auth/register", {
+      email,
+      password,
+      confirm_password: confirmPassword,
+      full_name: fullName,
     }),
-  register: (email: string, password: string, fullName: string) =>
-    api.post("/auth/register", { email, password, full_name: fullName }),
   logout: () => api.post("/auth/logout"),
   me: () => api.get("/users/me"),
 };
@@ -83,7 +86,7 @@ export const authApi = {
 export const transactionsApi = {
   list: (params?: {
     page?: number;
-    limit?: number;
+    page_size?: number;
     category_id?: string;
     start_date?: string;
     end_date?: string;
@@ -110,9 +113,17 @@ export const analyticsApi = {
   summary: (startDate?: string, endDate?: string) =>
     api.get("/analytics/summary", { params: { start_date: startDate, end_date: endDate } }),
   categories: (startDate?: string, endDate?: string) =>
-    api.get("/analytics/categories", { params: { start_date: startDate, end_date: endDate } }),
-  trends: (period?: string, months?: number) =>
-    api.get("/analytics/trends", { params: { period, months } }),
+    api.get("/analytics/category-breakdown", { params: { start_date: startDate, end_date: endDate } }),
+  trends: (startDate?: string, endDate?: string, period?: string) =>
+    api.get("/analytics/trends", { params: { start_date: startDate, end_date: endDate, period } }),
+  focusCategories: (names: string[], startDate?: string, endDate?: string) =>
+    api.get("/analytics/focus-categories", {
+      params: {
+        names: names.join(","),
+        start_date: startDate,
+        end_date: endDate,
+      },
+    }),
   insights: () => api.get("/analytics/insights"),
   budgetStatus: () => api.get("/analytics/budget-status"),
 };

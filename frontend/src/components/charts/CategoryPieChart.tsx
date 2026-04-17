@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   PieChart,
   Pie,
@@ -8,24 +10,30 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { formatCurrency } from "@/lib/utils";
-
-// Mock data - replace with API call
-const data = [
-  { name: "Groceries", value: 850, color: "#10b981" },
-  { name: "Dining", value: 420, color: "#ef4444" },
-  { name: "Utilities", value: 380, color: "#f59e0b" },
-  { name: "Transportation", value: 320, color: "#8b5cf6" },
-  { name: "Entertainment", value: 280, color: "#3b82f6" },
-  { name: "Shopping", value: 450, color: "#ec4899" },
-];
+import { analyticsApi } from "@/lib/api";
+import { formatCurrency, generateColor } from "@/lib/utils";
 
 export function CategoryPieChart() {
+  const { data } = useQuery({
+    queryKey: ["category-breakdown"],
+    queryFn: async () => (await analyticsApi.categories()).data,
+  });
+
+  const chartData = useMemo(() => {
+    return (
+      data?.categories?.map((category: any, index: number) => ({
+        name: category.category_name,
+        value: Number(category.amount),
+        color: category.category_color || generateColor(index),
+      })) || []
+    );
+  }, [data]);
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <PieChart>
         <Pie
-          data={data}
+          data={chartData}
           cx="50%"
           cy="50%"
           innerRadius={60}
@@ -33,7 +41,7 @@ export function CategoryPieChart() {
           paddingAngle={2}
           dataKey="value"
         >
-          {data.map((entry, index) => (
+          {chartData.map((entry: any, index: number) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
         </Pie>

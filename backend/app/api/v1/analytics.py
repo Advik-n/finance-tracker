@@ -15,6 +15,7 @@ from app.models.transaction import TransactionType
 from app.schemas.analytics import (
     BenchmarkResponse,
     CategoryBreakdownResponse,
+    FocusCategoryResponse,
     InsightsResponse,
     MerchantAnalysisResponse,
     RecurringTransactionsResponse,
@@ -88,6 +89,29 @@ async def get_category_breakdown(
         start_date=start_date,
         end_date=end_date,
         transaction_type=transaction_type,
+    )
+
+
+@router.get(
+    "/focus-categories",
+    response_model=FocusCategoryResponse,
+    summary="Get focus categories",
+    description="Get totals for key spending categories (petrol, food, utilities, clothes, groceries).",
+)
+async def get_focus_categories(
+    current_user: ActiveUser,
+    db: DatabaseSession,
+    names: str = Query(..., description="Comma-separated category names"),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+) -> FocusCategoryResponse:
+    name_list = [name.strip() for name in names.split(",") if name.strip()]
+    service = AnalyticsService(db)
+    return await service.get_focus_categories(
+        user_id=current_user.id,
+        names=name_list,
+        start_date=start_date,
+        end_date=end_date,
     )
 
 

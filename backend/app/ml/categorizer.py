@@ -25,18 +25,21 @@ from uuid import UUID
 
 import numpy as np
 
+from app.config import settings
 from app.ml.merchant_dict import (
     MerchantDictionary,
     MerchantEntry,
     COMPILED_BANK_PATTERNS,
     BANK_PATTERNS,
 )
+from app.ml.rag import RagEnricher
 from app.ml.categories import (
     CATEGORY_HIERARCHY,
     CategoryDefinition,
     get_category_by_subcategory,
     get_all_subcategories,
 )
+from app.utils.helpers import generate_slug
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +55,7 @@ class CategorizationMethod(str, Enum):
     TIME_PATTERN = "time_pattern"
     USER_CORRECTION = "user_correction"
     KEYWORD_MATCH = "keyword_match"
+    RAG_RETRIEVAL = "rag_retrieval"
     DEFAULT = "default"
 
 
@@ -591,6 +595,20 @@ class TransactionCategorizer:
     7. Time-based patterns
     8. Default categorization
     """
+
+    METHOD_WEIGHTS = {
+        CategorizationMethod.EXACT_MATCH: 1.0,
+        CategorizationMethod.UPI_MATCH: 0.98,
+        CategorizationMethod.PATTERN_MATCH: 0.95,
+        CategorizationMethod.RAG_RETRIEVAL: 0.92,
+        CategorizationMethod.ML_CLASSIFICATION: 0.88,
+        CategorizationMethod.FUZZY_MATCH: 0.85,
+        CategorizationMethod.AMOUNT_HEURISTIC: 0.6,
+        CategorizationMethod.TIME_PATTERN: 0.55,
+        CategorizationMethod.KEYWORD_MATCH: 0.7,
+        CategorizationMethod.DEFAULT: 0.2,
+        CategorizationMethod.USER_CORRECTION: 1.0,
+    }
     
     def __init__(
         self,
@@ -607,6 +625,7 @@ class TransactionCategorizer:
         self.merchant_dict = MerchantDictionary()
         self.ml_classifier = MLClassifier(model_path)
         self.confidence_threshold = confidence_threshold
+        self.rag_enricher = RagEnricher() if settings.rag_enabled else None
         
         # User correction history for learning
         self.corrections: Dict[str, Tuple[str, str]] = {}
@@ -626,6 +645,7 @@ class TransactionCategorizer:
         description = transaction.description
         normalized = TextProcessor.normalize(description)
         is_debit = transaction.transaction_type.lower() == 'debit'
+        extracted_merchant = self.extract_merchant(description)
         
         # Collect all candidates from different methods
         candidates: List[Tuple[str, str, float, CategorizationMethod, Optional[str]]] = []
@@ -676,6 +696,22 @@ class TransactionCategorizer:
         if ml_result:
             cat, subcat, conf = ml_result
             candidates.append((cat, subcat, conf * 0.85, CategorizationMethod.ML_CLASSIFICATION, None))
+
+        rag_evidence: List[Dict[str, Any]] = []
+        if self.rag_enricher:
+            rag_candidates = self.rag_enricher.suggest(
+                description=description,
+                merchant_name=extracted_merchant,
+            )
+            for rag in rag_candidates[:3]:
+                rag_evidence.append(rag.to_dict())
+                candidates.append((
+                    rag.category,
+                    rag.subcategory or rag.category,
+                    rag.confidence,
+                    CategorizationMethod.RAG_RETRIEVAL,
+                    rag.evidence.get("merchant") if isinstance(rag.evidence, dict) else None,
+                ))
         
         # Stage 7: Amount heuristics
         amount_hints = AmountHeuristics.get_suggestions(transaction.amount, is_debit)
@@ -689,8 +725,10 @@ class TransactionCategorizer:
         
         # Select best candidate
         if candidates:
-            # Sort by confidence
-            candidates.sort(key=lambda x: x[2], reverse=True)
+            def candidate_score(item: Tuple[str, str, float, CategorizationMethod, Optional[str]]) -> float:
+                return item[2] * self.METHOD_WEIGHTS.get(item[3], 1.0)
+
+            candidates.sort(key=candidate_score, reverse=True)
             best = candidates[0]
             
             # Build alternative categories
@@ -702,7 +740,7 @@ class TransactionCategorizer:
             
             # Check if it's a subscription
             is_subscription = False
-            merchant_name = best[4]
+            merchant_name = best[4] or extracted_merchant
             if merchant_name:
                 is_subscription = self.merchant_dict.is_subscription_merchant(merchant_name)
             
@@ -717,6 +755,7 @@ class TransactionCategorizer:
                 metadata={
                     "time_hints": time_hints,
                     "normalized_description": normalized,
+                    "rag_evidence": rag_evidence,
                 }
             )
         
@@ -732,6 +771,7 @@ class TransactionCategorizer:
             metadata={
                 "time_hints": TimePatternAnalyzer.get_time_hints(transaction.date),
                 "normalized_description": normalized,
+                "rag_evidence": rag_evidence,
             }
         )
     
@@ -917,17 +957,22 @@ class TransactionCategorizer:
         # Try keyword matching first
         for category in categories:
             if hasattr(category, 'keywords') and category.keywords:
-                keywords = [k.strip().lower() for k in category.keywords.split(",")]
+                if isinstance(category.keywords, list):
+                    keywords = [str(k).strip().lower() for k in category.keywords]
+                else:
+                    keywords = [k.strip().lower() for k in str(category.keywords).split(",")]
                 for keyword in keywords:
                     if keyword and keyword in text:
                         return category.id, 0.9
         
         # Try slug matching with our result
+        result_category_slug = generate_slug(result.category)
+        result_subcategory_slug = generate_slug(result.subcategory)
         for category in categories:
             if hasattr(category, 'slug'):
-                if category.slug.lower() in result.category.lower():
+                if category.slug.lower() == result_category_slug:
                     return category.id, result.confidence
-                if category.slug.lower() in result.subcategory.lower():
+                if category.slug.lower() == result_subcategory_slug:
                     return category.id, result.confidence
         
         return None, 0.0

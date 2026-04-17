@@ -595,3 +595,7 @@ class ExcelStatementParser(BaseParser):
 
 # Backward compatibility alias
 ExcelParser = ExcelStatementParser
+
+
+# Alias for backwards compatibility
+ExcelParser = ExcelStatementParser

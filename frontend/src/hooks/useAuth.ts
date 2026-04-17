@@ -21,7 +21,7 @@ export function useAuth() {
     setIsLoading(true);
     try {
       const response = await authApi.login(email, password);
-      const { access_token, refresh_token } = response.data;
+      const { access_token, refresh_token } = response.data.tokens;
 
       Cookies.set("access_token", access_token, { expires: 1 / 48 });
       Cookies.set("refresh_token", refresh_token, { expires: 7 });
@@ -36,10 +36,10 @@ export function useAuth() {
   }, []);
 
   const register = useCallback(
-    async (email: string, password: string, fullName: string) => {
+    async (email: string, password: string, confirmPassword: string, fullName: string) => {
       setIsLoading(true);
       try {
-        await authApi.register(email, password, fullName);
+        await authApi.register(email, password, confirmPassword, fullName);
         return await login(email, password);
       } finally {
         setIsLoading(false);

@@ -9,14 +9,14 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.transaction import Transaction
-from app.parsers.pdf_parser import PDFParser
-from app.parsers.csv_parser import CSVParser
-from app.parsers.excel_parser import ExcelParser
-from app.ml.categorizer import TransactionCategorizer
+from app.models.transaction import Transaction, TransactionSource, TransactionType
+from app.models.category import Category
+from app.parsers.universal_parser import parse_statement
+from app.ml.categorizer import TransactionCategorizer, TransactionInput
+from app.services.transaction_service import TransactionService
 
 
 class UploadJob:
@@ -53,10 +53,18 @@ class UploadService:
     
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.pdf_parser = PDFParser()
-        self.csv_parser = CSVParser()
-        self.excel_parser = ExcelParser()
         self.categorizer = TransactionCategorizer()
+        self.transaction_service = TransactionService(db)
+
+    def _map_source(self, file_type: str) -> TransactionSource:
+        ext = file_type.lower().lstrip(".")
+        if ext == "pdf":
+            return TransactionSource.PDF
+        if ext == "csv":
+            return TransactionSource.CSV
+        if ext in {"xlsx", "xls", "xlsm"}:
+            return TransactionSource.EXCEL
+        return TransactionSource.API
     
     async def create_upload_job(
         self,
@@ -106,54 +114,77 @@ class UploadService:
         
         try:
             job.status = "processing"
-            
-            # Parse file based on type
-            if file_type == ".pdf":
-                raw_transactions = self.pdf_parser.parse(file_content)
-            elif file_type == ".csv":
-                raw_transactions = self.csv_parser.parse(file_content)
-            elif file_type in [".xlsx", ".xls"]:
-                raw_transactions = self.excel_parser.parse(file_content)
-            else:
-                raise ValueError(f"Unsupported file type: {file_type}")
-            
-            # Create transactions
+
+            parser_result = parse_statement(
+                file_content=file_content,
+                filename=job.filename,
+                file_type=file_type.lstrip("."),
+            )
+            if parser_result.errors:
+                raise ValueError("; ".join(parser_result.errors))
+
+            categories_result = await self.db.execute(
+                select(Category).where(
+                    or_(
+                        Category.user_id == user_id,
+                        Category.is_system == True,  # noqa: E712
+                    )
+                )
+            )
+            categories = list(categories_result.scalars().all())
+
             transactions = []
-            for raw in raw_transactions:
+            for parsed in parser_result.transactions:
+                txn_type_value = getattr(parsed.transaction_type, "value", parsed.transaction_type)
+                if txn_type_value == TransactionType.CREDIT.value:
+                    txn_type = TransactionType.CREDIT
+                elif txn_type_value == TransactionType.DEBIT.value:
+                    txn_type = TransactionType.DEBIT
+                else:
+                    txn_type = TransactionType.DEBIT
+
+                transaction_date = datetime.strptime(parsed.date, "%Y-%m-%d")
+                merchant_name = self.categorizer.extract_merchant(parsed.description) or parsed.description
                 transaction = Transaction(
                     user_id=user_id,
-                    amount=Decimal(str(raw.get("amount", 0))),
-                    currency=raw.get("currency", "USD"),
-                    transaction_date=raw.get("date"),
-                    description=raw.get("description", ""),
-                    merchant_name=raw.get("merchant"),
-                    transaction_type=raw.get("type", "expense"),
-                    source="upload",
-                    upload_job_id=job_id,
+                    amount=Decimal(str(parsed.amount)),
+                    transaction_date=transaction_date,
+                    description=parsed.description,
+                    merchant_name=merchant_name,
+                    transaction_type=txn_type,
+                    source=self._map_source(file_type),
+                    upload_batch_id=job_id,
+                    raw_data=parsed.to_dict(),
                 )
-                
-                # Auto-categorize
-                category_id, confidence = self.categorizer.predict(
-                    description=transaction.description,
-                    merchant_name=transaction.merchant_name,
-                    amount=float(transaction.amount),
-                    categories=[],  # Would load from DB
-                )
-                
-                if category_id:
-                    transaction.category_id = category_id
-                    transaction.is_auto_categorized = True
-                    transaction.categorization_confidence = Decimal(str(confidence))
-                
+
+                if categories:
+                    result = self.categorizer.categorize(
+                        TransactionInput(
+                            description=parsed.description,
+                            amount=float(parsed.amount),
+                            transaction_type=txn_type.value.lower(),
+                            date=transaction_date,
+                        )
+                    )
+                    category_id = self.transaction_service._resolve_category_id(
+                        categories=categories,
+                        category_name=result.category,
+                        subcategory_name=result.subcategory,
+                    )
+                    if category_id:
+                        transaction.category_id = category_id
+                        transaction.is_auto_categorized = True
+                        transaction.confidence_score = float(result.confidence)
+
                 self.db.add(transaction)
                 transactions.append(transaction)
-            
+
             await self.db.flush()
-            
+
             job.status = "completed"
             job.completed_at = datetime.utcnow()
             job.transactions_count = len(transactions)
-            
+
         except Exception as e:
             job.status = "failed"
             job.error_message = str(e)
@@ -239,7 +270,10 @@ class UploadService:
         
         result = await self.db.execute(
             select(Transaction)
-            .where(Transaction.upload_job_id == job_id)
+            .where(
+                Transaction.upload_batch_id == job_id,
+                Transaction.is_deleted == False,  # noqa: E712
+            )
             .order_by(Transaction.transaction_date.desc())
         )
         
@@ -267,7 +301,7 @@ class UploadService:
         # Delete associated transactions
         result = await self.db.execute(
             select(Transaction)
-            .where(Transaction.upload_job_id == job_id)
+            .where(Transaction.upload_batch_id == job_id)
         )
         transactions = result.scalars().all()
         

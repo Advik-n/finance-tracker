@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: {
-    default: "AI Finance Tracker",
-    template: "%s | AI Finance Tracker",
+    default: "FinSight AI",
+    template: "%s | FinSight AI",
   },
   description: "AI-powered personal finance tracking and analytics platform",
   keywords: ["finance", "budget", "expense tracking", "AI", "analytics"],
@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://financetracker.com",
-    title: "AI Finance Tracker",
+    title: "FinSight AI",
     description: "AI-powered personal finance tracking and analytics platform",
-    siteName: "AI Finance Tracker",
+    siteName: "FinSight AI",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Finance Tracker",
+    title: "FinSight AI",
     description: "AI-powered personal finance tracking and analytics platform",
   },
   robots: {
